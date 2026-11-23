@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Funding Rate Checker</title>
+<meta name="description" content="Paste the current funding rate. See the annualized yield and whether it clears typical fees.">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="./">← Candle That Kills</a>
+  <h1>Funding-rate checker</h1>
+  <p class="tag" style="margin-bottom:20px">Paste the current funding rate. See what it's worth per year, and whether a spot + short-perp position clears the fees.</p>
+
+  <section class="card">
+    <div class="row">
+      <div>
+        <label for="rate">Funding rate per interval (%)</label>
+        <input id="rate" type="number" step="0.0001" value="0.0100" inputmode="decimal">
+      </div>
+      <div>
+        <label for="interval">Interval</label>
+        <select id="interval">
+          <option value="8" selected>8 hours</option>
+          <option value="4">4 hours</option>
+          <option value="1">1 hour</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="size">Position size ($, each leg)</label>
+        <input id="size" type="number" step="100" value="1000" inputmode="decimal">
+      </div>
+      <div>
+        <label for="days">Holding days</label>
+        <input id="days" type="number" step="1" value="30" inputmode="numeric">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="spotfee">Spot fee per trade (%)</label>
+        <input id="spotfee" type="number" step="0.01" value="0.10" inputmode="decimal">
+      </div>
+      <div>
+        <label for="perpfee">Perp fee per trade (%)</label>
+        <input id="perpfee" type="number" step="0.01" value="0.055" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="out" aria-live="polite">
+      <div class="kv"><span>Annualized (APR)</span><span id="apr">–</span></div>
+      <div class="kv"><span>Funding collected over holding period</span><span id="gross">–</span></div>
+      <div class="kv"><span>Fees (open + close, both legs)</span><span id="fees">–</span></div>
+      <div class="kv"><span>Net</span><span id="net">–</span></div>
+      <div class="kv"><span>Days needed to cover fees</span><span id="be">–</span></div>
+      <div id="verdict" class="verdict">–</div>
+    </div>
+  </section>
+
+  <details>
+    <summary>How this is calculated</summary>
+    <p>APR = rate × payments per day × 365. Funding collected = size × rate × payments per day × days. Fees = size × (spot fee + perp fee) × 2 (you open and close both legs).</p>
+    <p>Rough guide: 0.01% every 8h ≈ 11%/yr is "normal". Above ~0.05% every 8h (≈55%/yr) is a crowded, frenzied market. A negative rate means shorts pay longs, so this setup would pay instead of collect.</p>
+    <p>What this ignores: the rate changes every interval and can flip negative, exchange risk, withdrawal fees, borrow costs, and the price gap between spot and perp when you exit. Assumes the rate stays the same, which it won't.</p>
+  </details>
+
+  <p class="note">Educational content only. Not financial advice.<br>Runs entirely in your browser. Nothing is sent anywhere.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const fmt$ = v => (v < 0 ? "-$" : "$") + Math.abs(v).toLocaleString("en-US", {maximumFractionDigits: 2, minimumFractionDigits: 2});
+function calc(){
+  const rate = parseFloat($("rate").value) / 100;
+  const perDay = 24 / parseFloat($("interval").value);
+  const size = parseFloat($("size").value);
+  const days = parseFloat($("days").value);
+  const fees = size * ((parseFloat($("spotfee").value) || 0) + (parseFloat($("perpfee").value) || 0)) / 100 * 2;
+  if ([rate, size, days].some(isNaN)) return;
+  const apr = rate * perDay * 365;
+  const gross = size * rate * perDay * days;
+  const net = gross - fees;
+  const daily = size * rate * perDay;
+  $("apr").textContent = (apr * 100).toFixed(1) + "% / yr";
+  $("gross").textContent = fmt$(gross);
+  $("fees").textContent = "-" + fmt$(fees).replace("-", "");
+  $("net").textContent = fmt$(net);
+  $("be").textContent = daily > 0 ? Math.ceil(fees / daily) + " days" : "never (rate ≤ 0)";
+  const v = $("verdict");
+  if (rate <= 0) { v.className = "verdict v-bad"; v.textContent = "Negative or zero funding: shorts pay longs. This setup would pay, not collect."; }
+  else if (net <= 0) { v.className = "verdict v-bad"; v.textContent = "Doesn't clear fees over " + days + " days at this rate."; }
+  else if (apr < 0.15) { v.className = "verdict v-mid"; v.textContent = "Clears fees, but thin. A normal-to-quiet market. One rate flip can erase it."; }
+  else { v.className = "verdict v-good"; v.textContent = "Clears fees at this rate. Elevated funding: the crowd is paying. It rarely lasts."; }
+}
+document.querySelectorAll("input,select").forEach(el => el.addEventListener("input", calc));
+calc();
+</script>
+</body>
+</html>
