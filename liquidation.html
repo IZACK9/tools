@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liquidation Distance Indicator</title>
+<meta name="description" content="Free TradingView indicator. Copy the code, paste it into the Pine Editor, and see where a leveraged position would be liquidated.">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+<style>
+pre{background:#0d1422;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;max-height:420px;font-size:12.5px;line-height:1.5;margin:0}
+.copy{display:inline-block;font:inherit;font-weight:600;color:var(--bg);background:var(--teal);border:0;border-radius:10px;padding:12px 18px;margin:14px 0;cursor:pointer}
+ol{padding-left:20px} li{margin:6px 0}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="./">← Candle That Kills</a>
+  <h1>Liquidation distance indicator</h1>
+  <p class="tag" style="margin-bottom:20px">Set your leverage. It draws the estimated price where the position would be liquidated, and how far away that is right now.</p>
+
+  <section class="card">
+    <h2 style="font-size:18px;margin:0 0 8px">How to use (free, 1 minute)</h2>
+    <ol>
+      <li>Copy the code below.</li>
+      <li>Open any chart on <a href="https://www.tradingview.com/chart/">TradingView</a> (a free account works).</li>
+      <li>Open <b>Pine Editor</b> at the bottom, delete what's there, paste, and click <b>Add to chart</b>.</li>
+      <li>Click the indicator's ⚙️ to set side, leverage, and entry price.</li>
+    </ol>
+    <button class="copy" id="copy">Copy code</button>
+    <pre><code id="code">//@version=5
+// Liquidation Distance — Candle That Kills
+// Draws an estimated liquidation price for a leveraged position and shows how far away it is.
+// Educational tool only. Not financial advice. Estimates use isolated margin and ignore fees and funding.
+indicator("Liquidation Distance — Candle That Kills", shorttitle="Liq Distance", overlay=true)
+
+side      = input.string("Long", "Position side", options=["Long", "Short"])
+lev       = input.float(10.0, "Leverage (x)", minval=1.0, maxval=200.0, step=1.0)
+useClose  = input.bool(true, "Use current price as entry")
+entryIn   = input.float(0.0, "Entry price (if not using current price)", minval=0.0)
+mmrPct    = input.float(0.5, "Maintenance margin rate (%)", minval=0.0, maxval=10.0, step=0.1)
+warnPct   = input.float(2.0, "Warn when liquidation is closer than (%)", minval=0.1, step=0.1)
+
+entry = useClose or entryIn &lt;= 0 ? close : entryIn
+mmr   = mmrPct / 100.0
+isLong = side == "Long"
+
+// Isolated-margin estimate: position is closed when loss reaches (1/leverage - maintenance margin)
+liq = isLong ? entry * (1.0 - 1.0 / lev + mmr) : entry * (1.0 + 1.0 / lev - mmr)
+distPct = math.abs(close - liq) / close * 100.0
+danger = distPct &lt; warnPct
+
+liqColor = danger ? color.new(color.red, 0) : color.new(color.orange, 0)
+plot(liq, "Liquidation price", color=liqColor, linewidth=2, style=plot.style_stepline)
+plot(useClose ? na : entry, "Entry price", color=color.new(color.gray, 30), linewidth=1, style=plot.style_linebr)
+
+var table t = table.new(position.top_right, 2, 4, bgcolor=color.new(color.black, 20), border_width=1)
+if barstate.islast
+    table.cell(t, 0, 0, "Leverage", text_color=color.silver)
+    table.cell(t, 1, 0, str.tostring(lev, "#.#") + "x " + side, text_color=color.white)
+    table.cell(t, 0, 1, "Liquidation", text_color=color.silver)
+    table.cell(t, 1, 1, str.tostring(liq, format.mintick), text_color=liqColor)
+    table.cell(t, 0, 2, "Distance", text_color=color.silver)
+    table.cell(t, 1, 2, str.tostring(distPct, "#.##") + "%", text_color=danger ? color.red : color.white)
+    table.cell(t, 0, 3, "Status", text_color=color.silver)
+    table.cell(t, 1, 3, danger ? "&lt; " + str.tostring(warnPct, "#.#") + "% away" : "OK", text_color=danger ? color.red : color.teal)
+
+alertcondition(danger, "Liquidation getting close", "Price is within your warning distance of the estimated liquidation price.")
+</code></pre>
+  </section>
+
+  <details open>
+    <summary>What it assumes</summary>
+    <p>Isolated margin. Liquidation ≈ entry × (1 − 1/leverage + maintenance margin) for longs, and × (1 + 1/leverage − maintenance margin) for shorts. Real exchanges also count fees, funding, and their own maintenance tiers, so your actual liquidation can be a bit closer. Treat the line as an estimate, not a promise.</p>
+  </details>
+
+  <p class="note">Educational content only. Not financial advice.<br>Free to use and modify.</p>
+</main>
+<script>
+document.getElementById("copy").addEventListener("click", async e => {
+  const t = document.getElementById("code").innerText;
+  try { await navigator.clipboard.writeText(t); e.target.textContent = "Copied ✓"; }
+  catch { const r = document.createRange(); r.selectNodeContents(document.getElementById("code")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); e.target.textContent = "Press ⌘C / Ctrl+C"; }
+  setTimeout(() => e.target.textContent = "Copy code", 2500);
+});
+</script>
+</body>
+</html>
