@@ -1,0 +1,63 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funding Rate Cheat Sheet</title><link rel="icon" href="icon.svg"><style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:210mm;min-height:100vh;position:relative;background:#0a0f1a;color:#eef2f7;font-family:Inter,sans-serif;padding:16mm 15mm;font-size:10.5pt;line-height:1.45}
+.top{display:flex;align-items:center;gap:12px;border-bottom:1px solid #1f2b40;padding-bottom:10px}
+.top img{width:46px;height:46px;border-radius:50%}
+h1{font-size:21pt;margin:0}
+.sub{color:#93a1b5;margin:0}
+h2{font-size:12pt;color:#3cdcc8;margin:16px 0 6px;text-transform:uppercase;letter-spacing:.06em}
+p{margin:4px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.box{background:#121a2a;border:1px solid #1f2b40;border-radius:10px;padding:10px 12px}
+table{width:100%;border-collapse:collapse;margin-top:4px;font-variant-numeric:tabular-nums}
+td,th{padding:6px 8px;border-bottom:1px solid #1f2b40;text-align:left}
+th{color:#93a1b5;font-weight:600;font-size:9.5pt}
+.g{color:#26c98c}.r{color:#f04454}.y{color:#ffc93c}
+.formula{font-size:13pt;text-align:center;background:#0d1422;border:1px solid #3cdcc8;border-radius:10px;padding:10px;margin:6px 0}
+ul{margin:4px 0;padding-left:18px}li{margin:2px 0}
+.foot{margin-top:24px;color:#93a1b5;font-size:8.5pt;border-top:1px solid #1f2b40;padding-top:6px;display:flex;justify-content:space-between}
+@media(max-width:600px){body{padding:24px 16px}.grid{grid-template-columns:1fr}}@media print{body{width:210mm;height:297mm}.foot{position:absolute;bottom:12mm;left:15mm;right:15mm}}
+.print{display:inline-block;margin-top:14px;color:#0a0f1a;background:#3cdcc8;border-radius:8px;padding:8px 14px;font-weight:600;text-decoration:none}@media print{.print{display:none}}</style></head><body>
+<div class="top"><img src="icon.svg" alt=""><div><h1>Funding Rate Cheat Sheet</h1><p class="sub"><a href="./" style="color:#93a1b5">← Candle That Kills</a> · one page, no hype</p></div></div>
+
+<h2>What it is</h2>
+<p>Perpetual futures never expire. To keep their price glued to the real (spot) price, the crowded side pays the other side every few hours. That payment is the <b>funding rate</b>.</p>
+<div class="grid" style="margin-top:8px">
+  <div class="box"><b class="g">Positive rate</b><br>Longs pay shorts. More people are betting up.</div>
+  <div class="box"><b class="r">Negative rate</b><br>Shorts pay longs. More people are betting down.</div>
+</div>
+
+<h2>Where to find it</h2>
+<ul>
+<li><b>Bybit</b>: open a USDT perpetual (e.g. BTCUSDT). The top bar above the chart shows <i>Funding Rate</i> and a countdown.</li>
+<li><b>Binance Futures</b>: open the perpetual. The top bar shows <i>Funding / Countdown</i>.</li>
+<li><b>OKX</b>: open the perpetual swap. The top bar shows <i>Funding rate</i> and time to next payment.</li>
+</ul>
+<p>Check the interval. Most pairs pay every <b>8 hours</b> (3× a day), but some pay every 4h or 1h.</p>
+
+<h2>Turn it into a yearly number</h2>
+<div class="formula">APR = rate × payments per day × 365</div>
+<p>Example: 0.01% every 8h → 0.01% × 3 × 365 = <b>10.95% / yr</b></p>
+
+<h2>Normal vs frenzy (8h rate)</h2>
+<table>
+<tr><th>Rate every 8h</th><th>≈ per year</th><th>What it usually means</th></tr>
+<tr><td>below 0%</td><td class="r">negative</td><td>Fear. Shorts are crowded.</td></tr>
+<tr><td>0.01%</td><td>≈ 11%</td><td>Default / normal market</td></tr>
+<tr><td>0.03%</td><td class="y">≈ 33%</td><td>Heated. Longs getting crowded.</td></tr>
+<tr><td>0.05%</td><td class="y">≈ 55%</td><td>Frenzy territory</td></tr>
+<tr><td>0.10%+</td><td class="r">≈ 110%+</td><td>Extreme. Historically short-lived.</td></tr>
+</table>
+
+<h2>The honest part</h2>
+<ul>
+<li>The rate changes every interval and can flip negative. Today's number is not next week's number.</li>
+<li>In my own tests, holding spot + short perp to collect funding made roughly <b>20–30%/yr only in frenzies</b> (2021, early 2024) and about <b>0–3%/yr in quiet markets</b>.</li>
+<li>Fees, exchange risk, and the spot–perp price gap at exit all eat into it. Check before you assume.</li>
+</ul>
+<p style="margin-top:8px">Free checker (fees included): <a style="color:#3cdcc8" href="checker.html">izack9.github.io/tools/checker.html</a></p>
+
+<a class="print" href="javascript:print()">Save as PDF / Print</a>
+<div class="foot"><span>Educational content only. Not financial advice.</span><span>@candlethatkills_</span></div>
+</body></html>
