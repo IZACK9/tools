@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fee Calculator</title>
+<meta name="description" content="See what trading fees really cost: fees are charged on the full leveraged position, not your margin.">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="./">← Candle That Kills</a>
+  <h1>Fee calculator</h1>
+  <p class="tag" style="margin-bottom:20px">Exchanges charge fees on the full position, not on your margin. Enter your numbers and see what that adds up to.</p>
+
+  <section class="card">
+    <div class="row">
+      <div>
+        <label for="margin">Margin ($)</label>
+        <input id="margin" type="number" step="10" value="100" inputmode="decimal">
+      </div>
+      <div>
+        <label for="lev">Leverage (x)</label>
+        <input id="lev" type="number" step="1" value="20" inputmode="decimal">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="fee">Fee per side (%)</label>
+        <input id="fee" type="number" step="0.01" value="0.05" inputmode="decimal">
+      </div>
+      <div>
+        <label for="tpd">Trades per day</label>
+        <input id="tpd" type="number" step="1" value="10" inputmode="numeric">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="days">Trading days per month</label>
+        <input id="days" type="number" step="1" value="20" inputmode="numeric">
+      </div>
+      <div></div>
+    </div>
+
+    <div class="out" aria-live="polite">
+      <div class="kv"><span>Position size</span><span id="pos">–</span></div>
+      <div class="kv"><span>Fee per trade (entry + exit)</span><span id="per">–</span></div>
+      <div class="kv"><span>Fees per day</span><span id="day">–</span></div>
+      <div class="kv"><span>Fees per month</span><span id="month">–</span></div>
+      <div class="kv"><span>Price move needed just to break even</span><span id="be">–</span></div>
+      <div id="verdict" class="verdict">–</div>
+    </div>
+  </section>
+
+  <details>
+    <summary>How this is calculated</summary>
+    <p>Position = margin × leverage. Fee per trade = position × fee per side × 2 (you pay to open and to close). Fees per day = fee per trade × trades per day. Fees per month = fees per day × trading days.</p>
+    <p>Break-even move = fee per side × 2. Every trade starts that far in the red before price moves at all.</p>
+    <p>Typical taker fees on crypto perpetuals are around 0.04–0.06% per side; maker fees are lower. Check your own exchange's fee page. This ignores funding payments, spread and slippage, which add to the cost.</p>
+  </details>
+
+  <p class="note">Educational content only. Not financial advice.<br>Runs entirely in your browser. Nothing is sent anywhere.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const fmt$ = v => "$" + v.toLocaleString("en-US", {maximumFractionDigits: 2, minimumFractionDigits: 2});
+function calc(){
+  const m = parseFloat($("margin").value), L = parseFloat($("lev").value), f = parseFloat($("fee").value) / 100;
+  const tpd = parseFloat($("tpd").value) || 0, days = parseFloat($("days").value) || 0;
+  if ([m, L, f].some(isNaN)) return;
+  const pos = m * L, per = pos * f * 2, day = per * tpd, month = day * days;
+  $("pos").textContent = fmt$(pos);
+  $("per").textContent = fmt$(per);
+  $("day").textContent = fmt$(day);
+  $("month").textContent = fmt$(month);
+  $("be").textContent = (f * 2 * 100).toFixed(3).replace(/0+$/, "").replace(/\.$/, "") + "%";
+  const ratio = m > 0 ? month / m : 0, v = $("verdict");
+  if (ratio >= 1) { v.className = "verdict v-bad"; v.textContent = "Monthly fees are " + (ratio * 100).toFixed(0) + "% of your margin. Fees alone can empty this account."; }
+  else if (ratio >= 0.2) { v.className = "verdict v-mid"; v.textContent = "Monthly fees are " + (ratio * 100).toFixed(0) + "% of your margin. You need to win by more than this just to stay even."; }
+  else { v.className = "verdict v-good"; v.textContent = "Monthly fees are " + (ratio * 100).toFixed(0) + "% of your margin."; }
+}
+document.querySelectorAll("input").forEach(el => el.addEventListener("input", calc));
+calc();
+</script>
+</body>
+</html>
